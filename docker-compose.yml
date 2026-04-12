@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: mr
+      POSTGRES_PASSWORD: mr
+      POSTGRES_DB: mr_notifier
+    ports:
+      - "5432:5432"
