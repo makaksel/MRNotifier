@@ -6,8 +6,13 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
-func New(token, baseURL string) *gitlab.Client {
-	git, err := gitlab.NewClient(token, gitlab.WithBaseURL(baseURL))
+type Config struct {
+	Token   string
+	BaseURL string
+}
+
+func New(c Config) *gitlab.Client {
+	git, err := gitlab.NewClient(c.Token, gitlab.WithBaseURL(c.BaseURL))
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}

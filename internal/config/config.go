@@ -5,15 +5,17 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/makaksel/MRNotifier/internal/cache/redis"
+	"github.com/makaksel/MRNotifier/internal/gitlab"
+	"github.com/makaksel/MRNotifier/internal/repository/postgres"
 	"github.com/makaksel/MRNotifier/internal/telegram"
 )
 
 type Config struct {
 	App      AppConfig
-	Postgres PostgresConfig
-	Redis    RedisConfig
-	Queue    QueueConfig
-	GitLab   GitlabConfig
+	Postgres postgres.Config
+	Redis    redis.Config
+	GitLab   gitlab.Config
 	Telegram telegram.Config
 }
 
@@ -21,27 +23,6 @@ type AppConfig struct {
 	Name string
 	Env  string
 	Port string
-}
-
-type PostgresConfig struct {
-	DSN string
-}
-
-type RedisConfig struct {
-	Addr       string
-	Password   string
-	DB         int
-	TTLSeconds int
-}
-
-type QueueConfig struct {
-	Name      string
-	Consumers int
-}
-
-type GitlabConfig struct {
-	Token   string
-	BaseURL string
 }
 
 func Load() *Config {
@@ -52,23 +33,18 @@ func Load() *Config {
 			Port: getEnv("APP_PORT", "8080"),
 		},
 
-		Postgres: PostgresConfig{
+		Postgres: postgres.Config{
 			DSN: buildPostgresDSN(),
 		},
 
-		Redis: RedisConfig{
+		Redis: redis.Config{
 			Addr:       fmt.Sprintf("%s:%s", getEnv("REDIS_HOST", "localhost"), getEnv("REDIS_PORT", "6379")),
 			Password:   getEnv("REDIS_PASSWORD", ""),
 			DB:         getEnvAsInt("REDIS_DB", 0),
 			TTLSeconds: getEnvAsInt("CACHE_TTL_SECONDS", 3600),
 		},
 
-		Queue: QueueConfig{
-			Name:      getEnv("QUEUE_NAME", "mr_notifications"),
-			Consumers: getEnvAsInt("QUEUE_CONSUMERS", 1),
-		},
-
-		GitLab: GitlabConfig{
+		GitLab: gitlab.Config{
 			Token:   getEnv("GITLAB_TOKEN", ""),
 			BaseURL: getEnv("GITLAB_BASE_URL", "https://gitlab.com/api/v4"),
 		},

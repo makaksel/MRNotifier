@@ -1,15 +1,19 @@
 package telegram
 
-import "net/http"
+import (
+	"github.com/go-telegram/bot"
+)
 
 type Config struct {
 	BotToken string
 	ChatID   string
 }
 
-type Client struct {
-}
+func New(c Config) *bot.Bot {
+	b, err := bot.New(c.BotToken)
+	if err != nil {
+		panic(err)
+	}
 
-func New(c Config) *http.Client {
-	return "asfasf"
+	return b
 }

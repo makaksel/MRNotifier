@@ -3,10 +3,11 @@ module github.com/makaksel/MRNotifier
 go 1.25.0
 
 require (
+	github.com/go-telegram/bot v1.20.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.9.1
 	github.com/redis/go-redis/v9 v9.18.0
-	gitlab.com/gitlab-org/api/client-go v1.46.0
+	github.com/xanzy/go-gitlab v0.115.0
 )
 
 require (
@@ -21,6 +22,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 )

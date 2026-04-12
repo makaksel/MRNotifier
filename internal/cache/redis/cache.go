@@ -8,19 +8,26 @@ import (
 	goredis "github.com/redis/go-redis/v9"
 )
 
+type Config struct {
+	Addr       string
+	Password   string
+	DB         int
+	TTLSeconds int
+}
+
 type Cache struct {
 	client *goredis.Client
 	ttl    time.Duration
 }
 
-func New(addr, password string, db, ttlSeconds int) *Cache {
+func New(c Config) *Cache {
 	rdb := goredis.NewClient(&goredis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
+		Addr:     c.Addr,
+		Password: c.Password,
+		DB:       c.DB,
 	})
 
-	return &Cache{client: rdb, ttl: time.Duration(ttlSeconds) * time.Second}
+	return &Cache{client: rdb, ttl: time.Duration(c.TTLSeconds) * time.Second}
 }
 
 func (c *Cache) Get(ctx context.Context, key string, dest any) error {

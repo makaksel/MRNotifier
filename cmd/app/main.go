@@ -21,19 +21,19 @@ func main() {
 	cfg := config.Load()
 
 	// 2. Подключение к PostgreSQL (источник правды)
-	db := postgres.New(cfg.Postgres.DSN)
+	db := postgres.New(cfg.Postgres)
 
 	// 3. Репозиторий для работы с MR
 	repo := postgres.NewMergeRequestRepo(db)
 
 	// 4. Редис - кеш
-	cache := redis.New(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB, cfg.Redis.TTLSeconds)
+	cache := redis.New(cfg.Redis)
 
 	// 5. Очередь
 	queue := queue.New()
 
 	// 6. GitLab клиент
-	gitlabClient := gitlab.New(cfg.GitLab.Token, cfg.GitLab.BaseURL)
+	gitlabClient := gitlab.New(cfg.GitLab)
 
 	// 7. Telegram клиент
 	tg := telegram.New(cfg.Telegram)
