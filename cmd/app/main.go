@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/makaksel/MRNotifier/internal/cache/redis"
@@ -22,21 +21,18 @@ func main() {
 	cfg := config.Load()
 
 	// 2. Подключение к PostgreSQL (источник правды)
-	db, err := postgres.New(cfg.Postgres)
-	if err != nil {
-		log.Fatal(err)
-	}
+	db := postgres.New(cfg.Postgres.DSN)
 
 	// 3. Репозиторий для работы с MR
 	repo := postgres.NewMergeRequestRepo(db)
 
-	// 4. Redis — используется как кэш + быстрый доступ
+	// 4. Редис - кеш
 	cache := redis.New(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB, cfg.Redis.TTLSeconds)
 
-	// 5. Очередь (может быть Redis/Rabbit/etc)
-	queue := queue.New(cfg.Queue)
+	// 5. Очередь
+	queue := queue.New(cfg.Queue.Name, cfg.Queue.Consumers)
 
-	// 6. GitLab клиент (для получения актуальных данных MR)
+	// 6. GitLab клиент
 	gitlabClient := gitlab.New(cfg.GitLab)
 
 	// 7. Telegram клиент
