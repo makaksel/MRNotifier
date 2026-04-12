@@ -5,7 +5,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/makaksel/MRNotifier/internal/gitlab"
 	"github.com/makaksel/MRNotifier/internal/telegram"
 )
 
@@ -14,7 +13,7 @@ type Config struct {
 	Postgres PostgresConfig
 	Redis    RedisConfig
 	Queue    QueueConfig
-	GitLab   gitlab.Config
+	GitLab   GitlabConfig
 	Telegram telegram.Config
 }
 
@@ -38,6 +37,11 @@ type RedisConfig struct {
 type QueueConfig struct {
 	Name      string
 	Consumers int
+}
+
+type GitlabConfig struct {
+	Token   string
+	BaseURL string
 }
 
 func Load() *Config {
@@ -64,10 +68,9 @@ func Load() *Config {
 			Consumers: getEnvAsInt("QUEUE_CONSUMERS", 1),
 		},
 
-		GitLab: gitlab.Config{
+		GitLab: GitlabConfig{
 			Token:   getEnv("GITLAB_TOKEN", ""),
 			BaseURL: getEnv("GITLAB_BASE_URL", "https://gitlab.com/api/v4"),
-			Timeout: getEnvAsInt("GITLAB_TIMEOUT_SECONDS", 5),
 		},
 
 		Telegram: telegram.Config{

@@ -30,10 +30,10 @@ func main() {
 	cache := redis.New(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB, cfg.Redis.TTLSeconds)
 
 	// 5. Очередь
-	queue := queue.New(cfg.Queue.Name, cfg.Queue.Consumers)
+	queue := queue.New()
 
 	// 6. GitLab клиент
-	gitlabClient := gitlab.New(cfg.GitLab)
+	gitlabClient := gitlab.New(cfg.GitLab.Token, cfg.GitLab.BaseURL)
 
 	// 7. Telegram клиент
 	tg := telegram.New(cfg.Telegram)

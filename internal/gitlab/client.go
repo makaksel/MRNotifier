@@ -1,13 +1,16 @@
 package gitlab
 
-import "net/http"
+import (
+	"log"
 
-type Config struct {
-	Token   string
-	BaseURL string
-	Timeout int
-}
+	"github.com/xanzy/go-gitlab"
+)
 
-func New(c Config) *http.Client {
-	return "asfasf"
+func New(token, baseURL string) *gitlab.Client {
+	git, err := gitlab.NewClient(token, gitlab.WithBaseURL(baseURL))
+	if err != nil {
+		log.Fatalf("Failed to create client: %v", err)
+	}
+
+	return git
 }
