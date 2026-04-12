@@ -1,15 +1,24 @@
 package postgres
 
-import "database/sql"
+import (
+	"context"
 
-func NewMergeRequestRepo(db *sql.DB) string {
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/makaksel/MRNotifier/internal/domain"
+)
 
-	return "asfafsa"
+type MergeRequestRepo struct {
+	db *pgxpool.Pool
 }
 
-func Save() {
+func NewMergeRequestRepo(db *pgxpool.Pool) *MergeRequestRepo {
+	return &MergeRequestRepo{db: db}
+}
+
+func (r *MergeRequestRepo) Save(ctx context.Context, mr *domain.MergeRequest) {
 
 }
-func GetByID() {
+func (r *MergeRequestRepo) GetByID(ctx context.Context, id uuid.UUID) {
 
 }

@@ -1,11 +1,20 @@
 package postgres
 
-import "database/sql"
+import (
+	"context"
+	"fmt"
+	"os"
 
-type Config struct {
-	DSN string
-}
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
-func New(c Config) (*sql.DB, error) {
-	return sql.Open("postgres", c.DSN)
+func New(DSN string) *pgxpool.Pool {
+	pool, err := pgxpool.New(context.Background(), DSN)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	return pool
 }
