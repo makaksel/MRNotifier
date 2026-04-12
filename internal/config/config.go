@@ -6,16 +6,14 @@ import (
 	"strconv"
 
 	"github.com/makaksel/MRNotifier/internal/gitlab"
-	queue "github.com/makaksel/MRNotifier/internal/queue/memory"
-	"github.com/makaksel/MRNotifier/internal/repository/postgres"
 	"github.com/makaksel/MRNotifier/internal/telegram"
 )
 
 type Config struct {
 	App      AppConfig
-	Postgres postgres.Config
+	Postgres PostgresConfig
 	Redis    RedisConfig
-	Queue    queue.Config
+	Queue    QueueConfig
 	GitLab   gitlab.Config
 	Telegram telegram.Config
 }
@@ -26,11 +24,20 @@ type AppConfig struct {
 	Port string
 }
 
+type PostgresConfig struct {
+	DSN string
+}
+
 type RedisConfig struct {
 	Addr       string
 	Password   string
 	DB         int
 	TTLSeconds int
+}
+
+type QueueConfig struct {
+	Name      string
+	Consumers int
 }
 
 func Load() *Config {
@@ -41,7 +48,7 @@ func Load() *Config {
 			Port: getEnv("APP_PORT", "8080"),
 		},
 
-		Postgres: postgres.Config{
+		Postgres: PostgresConfig{
 			DSN: buildPostgresDSN(),
 		},
 
@@ -52,7 +59,7 @@ func Load() *Config {
 			TTLSeconds: getEnvAsInt("CACHE_TTL_SECONDS", 3600),
 		},
 
-		Queue: queue.Config{
+		Queue: QueueConfig{
 			Name:      getEnv("QUEUE_NAME", "mr_notifications"),
 			Consumers: getEnvAsInt("QUEUE_CONSUMERS", 1),
 		},
