@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -11,8 +10,8 @@ import (
 	queue "github.com/makaksel/MRNotifier/internal/queue/memory"
 	"github.com/makaksel/MRNotifier/internal/repository/postgres"
 	"github.com/makaksel/MRNotifier/internal/telegram"
+	transportHttp "github.com/makaksel/MRNotifier/internal/transport/http"
 	"github.com/makaksel/MRNotifier/internal/usecase"
-	"github.com/makaksel/MRNotifier/internal/worker"
 )
 
 func main() {
@@ -42,13 +41,14 @@ func main() {
 	usecase := usecase.New(repo, cache, queue, gitlabClient)
 
 	// 9. Worker — асинхронная обработка MR
-	worker := worker.New(repo, cache, queue, gitlab, tg)
+	//worker := worker.New(repo, cache, queue, gitlab, tg)
 
 	// 10. Запускаем воркер
-	go worker.Start(context.Background())
+	//go worker.Start(context.Background())
 
 	// 11. HTTP слой
-	router := http.NewRouter(usecase)
+	handler := transportHttp.NewHandler(usecase)
+	router := transportHttp.NewRouter(handler)
 
 	// 12. Старт сервера
 	http.ListenAndServe(":8080", router)
