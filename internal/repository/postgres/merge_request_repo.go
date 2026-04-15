@@ -3,9 +3,8 @@ package postgres
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/makaksel/MRNotifier/internal/domain"
+	"github.com/xanzy/go-gitlab"
 )
 
 type MergeRequestRepo struct {
@@ -16,9 +15,11 @@ func NewMergeRequestRepo(db *pgxpool.Pool) *MergeRequestRepo {
 	return &MergeRequestRepo{db: db}
 }
 
-func (r *MergeRequestRepo) Save(ctx context.Context, mr *domain.MergeRequest) {
+func (r *MergeRequestRepo) Save(ctx context.Context, mr *gitlab.MergeRequest) {
 
 }
-func (r *MergeRequestRepo) GetByID(ctx context.Context, id uuid.UUID) {
 
+func (r *MergeRequestRepo) GetByMRKey(ctx context.Context, key string) gitlab.MergeRequest {
+
+	return nil
 }

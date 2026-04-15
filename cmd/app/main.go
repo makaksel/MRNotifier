@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/makaksel/MRNotifier/internal/cache/redis"
@@ -52,6 +51,4 @@ func main() {
 
 	// 12. Старт сервера
 	http.ListenAndServe(":8080", router)
-
-	fmt.Println("Hello world")
 }
