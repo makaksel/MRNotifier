@@ -1,6 +1,6 @@
 package domain
 
 type CreateMRRequest struct {
-	MRID        int
+	MRIID       int
 	ProjectPath string
 }

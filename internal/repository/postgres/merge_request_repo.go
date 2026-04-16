@@ -19,7 +19,7 @@ func (r *MergeRequestRepo) Save(ctx context.Context, mr *gitlab.MergeRequest) {
 
 }
 
-func (r *MergeRequestRepo) GetByMRKey(ctx context.Context, key string) gitlab.MergeRequest {
+func (r *MergeRequestRepo) GetByMRKey(ctx context.Context, key string) *gitlab.MergeRequest {
 
 	return nil
 }

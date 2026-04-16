@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/makaksel/MRNotifier/internal/domain"
@@ -18,6 +19,8 @@ func NewHandler(uc *usecase.Client) *Handler {
 
 func (h *Handler) CreateMR(w http.ResponseWriter, r *http.Request) {
 	var req domain.CreateMRRequest
+
+	log.Printf("HANDLER CALLED")
 
 	json.NewDecoder(r.Body).Decode(&req)
 

@@ -8,13 +8,11 @@ import (
 	"github.com/makaksel/MRNotifier/internal/gitlab"
 	queue "github.com/makaksel/MRNotifier/internal/queue/memory"
 	"github.com/makaksel/MRNotifier/internal/repository/postgres"
-	"github.com/makaksel/MRNotifier/internal/telegram"
 	transportHttp "github.com/makaksel/MRNotifier/internal/transport/http"
 	"github.com/makaksel/MRNotifier/internal/usecase"
 )
 
 func main() {
-
 	// 1. Загружаем конфиг (DB, Redis, GitLab token, Telegram и т.д.)
 	cfg := config.Load()
 
@@ -34,7 +32,7 @@ func main() {
 	gitlabClient := gitlab.New(cfg.GitLab)
 
 	// 7. Telegram клиент
-	tg := telegram.New(cfg.Telegram)
+	//tg := telegram.New(cfg.Telegram)
 
 	// 8. UseCase — основная бизнес-логика
 	usecase := usecase.New(repo, cache, queue, gitlabClient)
