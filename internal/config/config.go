@@ -46,7 +46,7 @@ func Load() *Config {
 
 		GitLab: gitlab.Config{
 			Token:   getEnv("GITLAB_TOKEN", ""),
-			BaseURL: getEnv("GITLAB_BASE_URL", "https://gitlab.com/api/v4"),
+			BaseURL: getEnv("GITLAB_BASE_URL", "https://gitlab-edu.mos.ru/api/v4"),
 		},
 
 		Telegram: telegram.Config{

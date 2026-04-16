@@ -1,11 +1,30 @@
 version: "3.9"
 
 services:
+  app:
+    build: .
+    container_name: mr-notifier-app
+    volumes:
+      - .:/app
+      - /app/tmp
+    working_dir: /app
+    command: air
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env
+
   postgres:
     image: postgres:15
-    environment:
-      POSTGRES_USER: mr
-      POSTGRES_PASSWORD: mr
-      POSTGRES_DB: mr_notifier
+    container_name: mr-notifier-postgres
+    env_file:
+      - .env
+
+  redis:
+    image: redis:7
+    container_name: mr-notifier-redis
     ports:
-      - "5432:5432"
+      - "6379:6379"
