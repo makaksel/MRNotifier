@@ -1,15 +1,18 @@
 package main
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/makaksel/MRNotifier/internal/cache/redis"
 	"github.com/makaksel/MRNotifier/internal/config"
-	"github.com/makaksel/MRNotifier/internal/gitlab"
-	queue "github.com/makaksel/MRNotifier/internal/queue/memory"
+	queue "github.com/makaksel/MRNotifier/internal/queue/redis"
+	"github.com/makaksel/MRNotifier/internal/redis"
 	"github.com/makaksel/MRNotifier/internal/repository/postgres"
+	"github.com/makaksel/MRNotifier/internal/telegram"
 	transportHttp "github.com/makaksel/MRNotifier/internal/transport/http"
 	"github.com/makaksel/MRNotifier/internal/usecase"
+	"github.com/makaksel/MRNotifier/internal/worker"
+	"github.com/makaksel/MRNotifier/internal/worker/notification"
 )
 
 func main() {
@@ -23,25 +26,23 @@ func main() {
 	repo := postgres.NewMergeRequestRepo(db)
 
 	// 4. Редис - кеш
-	cache := redis.New(cfg.Redis)
+	redis := redis.New(cfg.Redis)
 
 	// 5. Очередь
-	queue := queue.New()
-
-	// 6. GitLab клиент
-	gitlabClient := gitlab.New(cfg.GitLab)
+	queue := queue.NewQueue(redis, "mr_notify")
 
 	// 7. Telegram клиент
-	//tg := telegram.New(cfg.Telegram)
+	tg := telegram.New(cfg.Telegram)
 
 	// 8. UseCase — основная бизнес-логика
-	usecase := usecase.New(repo, cache, queue, gitlabClient)
+	usecase := usecase.New(repo, queue)
 
 	// 9. Worker — асинхронная обработка MR
-	//worker := worker.New(repo, cache, queue, gitlab, tg)
+	workerHandler := notification.New(repo, tg)
+	worker := worker.NewWorker(queue, workerHandler)
 
 	// 10. Запускаем воркер
-	//go worker.Start(context.Background())
+	go worker.Start(context.Background())
 
 	// 11. HTTP слой
 	handler := transportHttp.NewHandler(usecase)
