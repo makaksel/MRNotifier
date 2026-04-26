@@ -51,24 +51,4 @@ mr-notifier/
 ├── go.mod
 └── README.md
 ```
-🔥 Поток обработки запроса
 
-```
-POST → UseCase
-      ↓
-Redis? → yes → дальше
-      ↓ no
-Postgres? → yes → cache
-      ↓ no
-Create stub
-      ↓
-GitLab fetch
-      ↓
-Update DB + cache
-      ↓
-Queue publish
-      ↓
-Worker
-      ↓
-Telegram notify
-```

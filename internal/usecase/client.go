@@ -1,25 +1,19 @@
 package usecase
 
 import (
-	"github.com/makaksel/MRNotifier/internal/cache/redis"
-	"github.com/makaksel/MRNotifier/internal/queue/memory"
+	queue "github.com/makaksel/MRNotifier/internal/queue/redis"
 	"github.com/makaksel/MRNotifier/internal/repository/postgres"
-	"github.com/xanzy/go-gitlab"
 )
 
 type Client struct {
-	repo         *postgres.MergeRequestRepo
-	cache        *redis.Cache
-	queue        *memory.Queue
-	gitlabClient *gitlab.Client
+	repo  *postgres.MergeRequestRepo
+	queue *queue.RedisQueue
 }
 
-func New(repo *postgres.MergeRequestRepo, cache *redis.Cache, queue *memory.Queue, gitlabClient *gitlab.Client) *Client {
+func New(repo *postgres.MergeRequestRepo, queue *queue.RedisQueue) *Client {
 
 	return &Client{
 		repo,
-		cache,
 		queue,
-		gitlabClient,
 	}
 }

@@ -5,49 +5,35 @@ import (
 	"log"
 
 	"github.com/makaksel/MRNotifier/internal/domain"
-	"github.com/makaksel/MRNotifier/internal/utils"
-	"github.com/xanzy/go-gitlab"
 )
 
-func (uc *Client) HandleMr(ctx context.Context, input domain.CreateMRRequest) error {
-	MRKey := utils.MakeKey(input.ProjectPath, input.MRIID)
+func (uc *Client) HandleMr(ctx context.Context, input *domain.MergeRequestEvent) error {
+	log.Printf("input.MR.State: %s", input.MR.State)
 
-	MR := new(gitlab.MergeRequest)
-
-	// Проверяем МР в кеше
-	err := uc.cache.Get(ctx, MRKey, MR)
-	if err != nil {
-		// Проверяем МР в бд если нет в кеше
-		MR = uc.repo.GetByMRKey(ctx, MRKey)
+	if input.MR.State != "opened" || input.MR.State != "merged" {
+		log.Printf("MR state not opened or merged: %s", input.MR.State)
+		return nil
 	}
-	log.Printf("GitLab data: %s; %d", input.ProjectPath, input.MRIID)
 
-	// Запрашиваем МР из гитлаба
-	MRData, resp, err := uc.gitlabClient.MergeRequests.GetMergeRequest(
-		input.ProjectPath,
-		input.MRIID,
-		nil,
-	)
-
+	// Обновляем MR в БД
+	updated, err := uc.repo.UpsertMR(ctx, input)
 	if err != nil {
-		log.Println("GitLab error:", err)
 		return err
 	}
+	if !updated {
+		return nil
+	}
 
-	log.Println("Status:", resp.StatusCode)
-
-	// Обновляем ДБ
-	uc.repo.Save(ctx, MRData)
-
-	// Обновляем кеш
-	uc.cache.Set(ctx, MRKey, MRData)
+	// Обновляем уведомление в БД
+	created, err := uc.repo.InsertNotification(ctx, input.ProjectPath, input.MR.IID, input.MR.State)
+	if err != nil {
+		return err
+	}
+	if !created {
+		return nil
+	}
 
 	// Пушим в очередь воркера
 
-	//if err := uc.repo.Save(ctx, MRData); err != nil {
-	//	return err
-	//}
-
-	//return uc.queue.Publish(ctx, mr.ID)
 	return nil
 }
