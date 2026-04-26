@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Congratulations on March 8th!</title>
+    <title>Поздравляем на International Women's Day!</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
             background-color: #f4f4f9;
+            overflow: hidden;
         }
         .container {
             background-color: #fff;
@@ -20,20 +21,35 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
+            position: relative;
         }
         h1 {
             color: #333;
+            font-size: 3em;
+            animation: salutation 2s ease-in-out infinite;
         }
         p {
             color: #666;
+            font-size: 1.2em;
+        }
+        @keyframes salutation {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Congratulations on March 8th!</h1>
-        <p>Today is International Women's Day, a day to celebrate the achievements and contributions of women around the world.</p>
-        <p>May this day inspire you to continue to be a strong, confident, and empowered woman.</p>
+        <h1>Поздравляем на International Women's Day!</h1>
+        <p>Сегодня - Международный женский день, день памяти и достижений женщин во всем мире.</p>
+        <p>Мы рады, что эта дата inspires вас на продолжение быть сильной, уверенной и эмоционально мощной женщиной.</p>
     </div>
 </body>
 </html>
