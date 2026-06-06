@@ -2,12 +2,15 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
 	"github.com/makaksel/MRNotifier/internal/redis"
 	"github.com/makaksel/MRNotifier/internal/repository/postgres"
 	"github.com/makaksel/MRNotifier/internal/telegram"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -24,6 +27,11 @@ type AppConfig struct {
 }
 
 func Load() *Config {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	return &Config{
 		App: AppConfig{
 			Name: getEnv("APP_NAME", "mr-notifier"),
@@ -39,6 +47,7 @@ func Load() *Config {
 			Addr:     fmt.Sprintf("%s:%s", getEnv("REDIS_HOST", "localhost"), getEnv("REDIS_PORT", "6379")),
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       getEnvAsInt("REDIS_DB", 0),
+			Channel:  getEnv("REDIS_PORT_CHANNEL", ""),
 		},
 
 		Telegram: telegram.Config{
@@ -49,7 +58,8 @@ func Load() *Config {
 }
 
 func getEnv(key, defaultVal string) string {
-	if val, ok := os.LookupEnv(key); ok {
+	val := os.Getenv(key)
+	if val != "" {
 		return val
 	}
 	return defaultVal
@@ -72,7 +82,7 @@ func buildPostgresDSN() string {
 	ssl := getEnv("POSTGRES_SSLMODE", "disable")
 
 	return fmt.Sprintf(
-		"postgress://%s:%s@%s:%s/%s?sslmode=%s",
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		user, password, host, port, db, ssl,
 	)
 }

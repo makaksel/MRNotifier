@@ -5,6 +5,8 @@ WORKDIR /app
 # зависимости
 RUN go install github.com/air-verse/air@latest
 
+ENV PATH="/go/bin:$PATH"
+
 # кэш модулей
 COPY go.mod go.sum ./
 RUN go mod download

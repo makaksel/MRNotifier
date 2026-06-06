@@ -1,16 +1,16 @@
 package notification
 
 import (
-	"github.com/go-telegram/bot"
-	"github.com/makaksel/MRNotifier/internal/repository/postgres"
+	"github.com/makaksel/MRNotifier/internal/repository"
+	"github.com/makaksel/MRNotifier/internal/telegram"
 )
 
 type Client struct {
-	repo *postgres.MergeRequestRepo
-	tg   *bot.Bot
+	repo repository.NotificationRepository
+	tg   *telegram.Bot
 }
 
-func New(repo *postgres.MergeRequestRepo, tg *bot.Bot) *Client {
+func New(repo repository.NotificationRepository, tg *telegram.Bot) *Client {
 	return &Client{
 		repo: repo,
 		tg:   tg,

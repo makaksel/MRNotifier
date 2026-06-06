@@ -2,8 +2,8 @@ package queue
 
 import (
 	"context"
+	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -19,11 +19,11 @@ func NewQueue(client *redis.Client, channel string) *RedisQueue {
 	}
 }
 
-func (q *RedisQueue) Publish(ctx context.Context, id uuid.UUID) error {
-	return q.client.Publish(ctx, q.channel, id.String()).Err()
+func (q *RedisQueue) Publish(ctx context.Context, id int) error {
+	return q.client.Publish(ctx, q.channel, id).Err()
 }
 
-func (q *RedisQueue) Consume(ctx context.Context) (<-chan uuid.UUID, error) {
+func (q *RedisQueue) Consume(ctx context.Context) (<-chan int, error) {
 	pubsub := q.client.Subscribe(ctx, q.channel)
 
 	// дождаться подписки
@@ -31,7 +31,7 @@ func (q *RedisQueue) Consume(ctx context.Context) (<-chan uuid.UUID, error) {
 		return nil, err
 	}
 
-	ch := make(chan uuid.UUID)
+	ch := make(chan int)
 
 	go func() {
 		defer close(ch)
@@ -40,7 +40,7 @@ func (q *RedisQueue) Consume(ctx context.Context) (<-chan uuid.UUID, error) {
 		for {
 			select {
 			case msg := <-pubsub.Channel():
-				id, err := uuid.Parse(msg.Payload)
+				id, err := strconv.Atoi(msg.Payload)
 				if err != nil {
 					continue
 				}

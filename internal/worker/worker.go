@@ -4,12 +4,11 @@ import (
 	"context"
 	"log"
 
-	"github.com/google/uuid"
 	queue "github.com/makaksel/MRNotifier/internal/queue/redis"
 )
 
 type NotificationHandler interface {
-	Handle(ctx context.Context, id uuid.UUID) error
+	Handle(ctx context.Context, id int) error
 }
 
 type Worker struct {
@@ -42,7 +41,7 @@ func (w *Worker) Start(ctx context.Context) error {
 
 			sem <- struct{}{}
 
-			go func(id uuid.UUID) {
+			go func(id int) {
 				defer func() { <-sem }()
 
 				if err := w.handler.Handle(ctx, id); err != nil {

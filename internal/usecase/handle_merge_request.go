@@ -10,13 +10,14 @@ import (
 func (uc *Client) HandleMr(ctx context.Context, input *domain.MergeRequestEvent) error {
 	log.Printf("input.MR.State: %s", input.MR.State)
 
-	if input.MR.State != "opened" || input.MR.State != "merged" {
+	allowedStates := map[string]bool{"opened": true, "merged": true}
+	if !allowedStates[input.MR.State] {
 		log.Printf("MR state not opened or merged: %s", input.MR.State)
 		return nil
 	}
 
 	// Обновляем MR в БД
-	updated, err := uc.repo.UpsertMR(ctx, input)
+	updated, err := uc.MRRepo.UpsertMR(ctx, input)
 	if err != nil {
 		return err
 	}
@@ -25,7 +26,7 @@ func (uc *Client) HandleMr(ctx context.Context, input *domain.MergeRequestEvent)
 	}
 
 	// Обновляем уведомление в БД
-	created, err := uc.repo.InsertNotification(ctx, input.ProjectPath, input.MR.IID, input.MR.State)
+	created, err := uc.NotificationRepo.InsertNotification(ctx, input.ProjectPath, input.MR.IID, input.MR.State)
 	if err != nil {
 		return err
 	}
@@ -34,6 +35,5 @@ func (uc *Client) HandleMr(ctx context.Context, input *domain.MergeRequestEvent)
 	}
 
 	// Пушим в очередь воркера
-
-	return nil
+	return uc.queue.Publish(ctx, 1)
 }

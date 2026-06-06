@@ -7,6 +7,7 @@ import (
 type Config struct {
 	Addr       string
 	Password   string
+	Channel    string
 	DB         int
 	TTLSeconds int
 }
@@ -17,8 +18,6 @@ func New(c Config) *goredis.Client {
 		Password: c.Password,
 		DB:       c.DB,
 	})
-
-	defer rdb.Close()
 
 	return rdb
 }

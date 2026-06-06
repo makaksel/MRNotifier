@@ -2,18 +2,20 @@ package usecase
 
 import (
 	queue "github.com/makaksel/MRNotifier/internal/queue/redis"
-	"github.com/makaksel/MRNotifier/internal/repository/postgres"
+	"github.com/makaksel/MRNotifier/internal/repository"
 )
 
 type Client struct {
-	repo  *postgres.MergeRequestRepo
-	queue *queue.RedisQueue
+	MRRepo           repository.MergeRequestRepository
+	NotificationRepo repository.NotificationRepository
+	queue            *queue.RedisQueue
 }
 
-func New(repo *postgres.MergeRequestRepo, queue *queue.RedisQueue) *Client {
+func New(mrRepo repository.MergeRequestRepository, nRepo repository.NotificationRepository, queue *queue.RedisQueue) *Client {
 
 	return &Client{
-		repo,
+		mrRepo,
+		nRepo,
 		queue,
 	}
 }

@@ -3,11 +3,14 @@ package repository
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/makaksel/MRNotifier/internal/domain"
 )
 
 type MergeRequestRepository interface {
-	Save(ctx context.Context, mr *domain.MergeRequest) error
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.MergeRequest, error)
+	UpsertMR(ctx context.Context, mr *domain.MergeRequestEvent) (bool, error)
+}
+
+type NotificationRepository interface {
+	GetNotification(ctx context.Context, id int) (*domain.Notification, error)
+	InsertNotification(ctx context.Context, projectPath string, mrIID int, eventType string) (bool, error)
 }
