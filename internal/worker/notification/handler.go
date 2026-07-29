@@ -3,26 +3,37 @@ package notification
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/go-telegram/bot"
 )
 
 func (c *Client) Handle(ctx context.Context, id int) error {
-	// 1. достать notification
-	n, err := c.repo.GetNotification(ctx, id)
-	if err != nil {
-		return err
-	}
+	// Get from cache by ID
 
-	msg := fmt.Sprintf(
-		"📦 MR %s/%d: %s\n\nCreated: %s\n\nWeb URL here",
-		n.ProjectPath, n.MRIID, n.EventType, n.CreatedAt,
+	// Get from DB by ID
+	log.Printf("Handle MRIID: %d", id)
+
+	msg := fmt.Sprintf(`
+		🚀 Новый Merge Request создан
+		📌 Название: 
+		🌿 Ветка: → 
+		👤 Автор:  (TG:@chingaevaes)
+		🔗 Ссылка: 
+		`,
+		id,
 	)
 
-	// 2. отправить в Telegram
-	_, err = c.tg.Bot.SendMessage(ctx, &bot.SendMessageParams{
+	// Send to tg
+	_, err := c.tg.Bot.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: c.tg.Config.ChatID,
 		Text:   msg,
 	})
+
+	// Update notification in cache
+	// Update notification in db
+
+	// If it new, update reply message
+
 	return err
 }

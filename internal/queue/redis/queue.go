@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"log"
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
@@ -20,31 +21,41 @@ func NewQueue(client *redis.Client, channel string) *RedisQueue {
 }
 
 func (q *RedisQueue) Publish(ctx context.Context, id int) error {
-	return q.client.Publish(ctx, q.channel, id).Err()
+	return q.client.Publish(ctx, q.channel, strconv.Itoa(id)).Err()
 }
 
 func (q *RedisQueue) Consume(ctx context.Context) (<-chan int, error) {
 	pubsub := q.client.Subscribe(ctx, q.channel)
 
-	// дождаться подписки
 	if _, err := pubsub.Receive(ctx); err != nil {
 		return nil, err
 	}
 
-	ch := make(chan int)
+	out := make(chan int)
+	redisCh := pubsub.Channel()
 
 	go func() {
-		defer close(ch)
+		defer close(out)
 		defer pubsub.Close()
 
 		for {
 			select {
-			case msg := <-pubsub.Channel():
-				id, err := strconv.Atoi(msg.Payload)
+			case msg, ok := <-redisCh:
+				if !ok {
+					return
+				}
+
+				notification, err := strconv.Atoi(msg.Payload)
 				if err != nil {
+					log.Printf("decode error: %v", err)
 					continue
 				}
-				ch <- id
+
+				select {
+				case out <- notification:
+				case <-ctx.Done():
+					return
+				}
 
 			case <-ctx.Done():
 				return
@@ -52,5 +63,5 @@ func (q *RedisQueue) Consume(ctx context.Context) (<-chan int, error) {
 		}
 	}()
 
-	return ch, nil
+	return out, nil
 }

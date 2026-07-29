@@ -75,12 +75,18 @@ func getEnvAsInt(key string, defaultVal int) int {
 
 func buildPostgresDSN() string {
 	host := getEnv("POSTGRES_HOST", "localhost")
-	port := getEnv("POSTGRES_PORT", "5432")
+	port := getEnv("$POSTGRES_PORT", "5432")
 	user := getEnv("POSTGRES_USER", "postgress")
 	password := getEnv("POSTGRES_PASSWORD", "")
 	db := getEnv("POSTGRES_DB", "postgress")
 	ssl := getEnv("POSTGRES_SSLMODE", "disable")
-
+	log.Printf(
+		"host=%s port=%s user=%s db=%s",
+		host,
+		port,
+		user,
+		db,
+	)
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		user, password, host, port, db, ssl,

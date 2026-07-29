@@ -18,15 +18,14 @@ func NewNotificationRepo(db *pgxpool.Pool) *NotificationRepo {
 	return &NotificationRepo{db: db}
 }
 
-func (r *NotificationRepo) InsertNotification(ctx context.Context, projectPath string, mrIID int, eventType string) (bool, error) {
+func (r *NotificationRepo) InsertNotification(ctx context.Context, projectPath string, mrIID int, n domain.Notification) (bool, error) {
 	res, err := r.db.Exec(ctx, `
-		INSERT INTO notifications (project_path, mr_iid, event_type)
+		INSERT INTO notifications (project_path, mr_iid)
 		VALUES ($1, $2, $3)
 		ON CONFLICT DO NOTHING
 	`,
 		projectPath,
 		mrIID,
-		eventType,
 	)
 
 	if err != nil {

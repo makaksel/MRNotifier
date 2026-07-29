@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/makaksel/MRNotifier/internal/config"
 	queue "github.com/makaksel/MRNotifier/internal/queue/redis"
@@ -27,29 +29,32 @@ func main() {
 	NotificationRepo := postgres.NewNotificationRepo(db)
 
 	// 4. Редис - для очереди
-	redisS := redis.New(cfg.Redis)
+	r := redis.New(cfg.Redis)
 
 	// 5. Очередь
-	queueS := queue.NewQueue(redisS, cfg.Redis.Channel)
+	q := queue.NewQueue(r, cfg.Redis.Channel)
 
 	// 7. Telegram клиент
-	tg := telegram.New(cfg.Telegram)
+	tg, err := telegram.New(cfg.Telegram)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to telegram: %v\n", err)
+	}
 
 	// 8. UseCase — основная бизнес-логика
-	usecaseS := usecase.New(MRRepo, NotificationRepo, queueS)
+	uc := usecase.New(MRRepo, NotificationRepo, q)
 
 	// 9. Worker — асинхронная обработка MR
 	workerHandler := notification.New(NotificationRepo, tg)
-	workerS := worker.NewWorker(queueS, workerHandler)
+	workerS := worker.NewWorker(q, workerHandler)
 
 	// 10. Запускаем воркер
 	go workerS.Start(context.Background())
 
 	defer db.Close()
-	defer redisS.Close()
+	defer r.Close()
 
 	// 11. HTTP слой
-	handler := transportHttp.NewHandler(usecaseS)
+	handler := transportHttp.NewHandler(uc)
 	router := transportHttp.NewRouter(handler)
 
 	// 12. Старт сервера

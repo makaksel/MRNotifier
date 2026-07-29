@@ -3,11 +3,11 @@ version: "3.9"
 services:
   app:
     build: .
-    container_name: mr-notifier-app
+    container_name: mr-notifier-notifier
     volumes:
-      - .:/app
-      - /app/tmp
-    working_dir: /app
+      - .:/notifier
+      - /notifier/tmp
+    working_dir: /notifier
     command: air
     ports:
       - "${APP_PORT}:${APP_PORT}"
@@ -22,9 +22,28 @@ services:
     container_name: mr-notifier-postgres
     env_file:
       - .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7
     container_name: mr-notifier-redis
     ports:
       - "6379:6379"
+
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ./migrations:/migrations
+    env_file:
+      - .env
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: >
+      migrate -path /migrations
+      -database postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable
+      up
+    depends_on:
+      - postgres
+
+volumes:
+  pg_data:

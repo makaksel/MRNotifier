@@ -3,6 +3,8 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"math"
+	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/makaksel/MRNotifier/internal/domain"
@@ -18,16 +20,31 @@ type Bot struct {
 	Config Config
 }
 
-func New(c Config) *Bot {
-	b, err := bot.New(c.BotToken)
+func New(c Config) (*Bot, error) {
+	var (
+		b     *bot.Bot
+		err   error
+		retry = 3
+	)
+
+	for i := 0; i < retry; i++ {
+		b, err = bot.New(c.BotToken)
+		if err == nil {
+			break
+		}
+
+		// Wait before retrying
+		time.Sleep(time.Duration(math.Pow(2, float64(i))) * time.Second)
+	}
+
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &Bot{
 		Bot:    b,
 		Config: c,
-	}
+	}, nil
 }
 
 func (b *Bot) SendNotification(ctx context.Context, n *domain.Notification) error {

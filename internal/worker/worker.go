@@ -4,11 +4,12 @@ import (
 	"context"
 	"log"
 
+	"github.com/makaksel/MRNotifier/internal/domain"
 	queue "github.com/makaksel/MRNotifier/internal/queue/redis"
 )
 
 type NotificationHandler interface {
-	Handle(ctx context.Context, id int) error
+	Handle(ctx context.Context, n *domain.Notification) error
 }
 
 type Worker struct {
@@ -34,20 +35,20 @@ func (w *Worker) Start(ctx context.Context) error {
 
 	for {
 		select {
-		case id, ok := <-ch:
+		case n, ok := <-ch:
 			if !ok {
 				return nil
 			}
 
 			sem <- struct{}{}
 
-			go func(id int) {
+			go func(n *domain.Notification) {
 				defer func() { <-sem }()
 
-				if err := w.handler.Handle(ctx, id); err != nil {
-					log.Printf("handle error: %v, id=%s", err, id)
+				if err := w.handler.Handle(ctx, n); err != nil {
+					log.Printf("handle error: %v, notification: %+v", err, n)
 				}
-			}(id)
+			}(n)
 
 		case <-ctx.Done():
 			return ctx.Err()

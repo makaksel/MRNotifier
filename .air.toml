@@ -2,7 +2,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go build -buildvcs=false -o ./tmp/app ./cmd/app"
-bin = "tmp/app"
+cmd = "go build -buildvcs=false -o ./tmp/notifier ./cmd/notifier"
+bin = "tmp/notifier"
 include_ext = ["go"]
 exclude_dir = ["tmp", "vendor"]
