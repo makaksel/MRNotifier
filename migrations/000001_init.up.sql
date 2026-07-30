@@ -28,15 +28,19 @@ CREATE TABLE merge_requests
 );
 CREATE TABLE notifications
 (
-    id           SERIAL PRIMARY KEY,
+    id                  SERIAL PRIMARY KEY,
 
-    project_path TEXT    NOT NULL,
+    project_path        TEXT    NOT NULL,
 
-    mr_iid       INTEGER NOT NULL,
+    mr_iid              INTEGER NOT NULL,
 
-    event_type   TEXT    NOT NULL,
+    reply_to_message_id INTEGER,
 
-    created_at   TIMESTAMPTZ DEFAULT now(),
+    text                TEXT    NOT NULL,
 
-    UNIQUE (project_path, mr_iid, event_type)
+    status              TEXT    NOT NULL,
+
+    created_at          TIMESTAMPTZ DEFAULT now(),
+
+    UNIQUE (project_path, mr_iid, status)
 );
