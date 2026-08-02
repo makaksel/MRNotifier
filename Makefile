@@ -21,9 +21,15 @@ restart:
 	docker compose down && docker compose up --build
 
 migrate-up:
-	docker compose run --rm migrate up
+	migrate -path ./migrations -database postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable up
 
 migrate-down:
+	migrate -path ./migrations -database postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable down
+
+migrate-docker-up:
+	docker compose run --rm migrate up
+
+migrate-docker-down:
 	docker run --rm -v $(PWD)/migrations:/migrations migrate/migrate \
 	-database postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)?sslmode=disable \
 	-path /migrations down 1
