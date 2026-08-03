@@ -18,21 +18,27 @@ func NewNotificationRepo(db *pgxpool.Pool) *NotificationRepo {
 	return &NotificationRepo{db: db}
 }
 
-func (r *NotificationRepo) InsertNotification(ctx context.Context, projectPath string, mrIID int, n domain.Notification) (bool, error) {
-	res, err := r.db.Exec(ctx, `
-		INSERT INTO notifications (project_path, mr_iid)
+func (r *NotificationRepo) InsertNotification(ctx context.Context, projectPath string, mrIID int, n *domain.Notification) (bool, error) {
+	err := r.db.QueryRow(ctx, `
+		INSERT INTO notifications (project_path, mr_iid, status)
 		VALUES ($1, $2, $3)
 		ON CONFLICT DO NOTHING
+		RETURNING id
 	`,
 		projectPath,
 		mrIID,
-	)
+		n.Status,
+	).Scan(&n.ID)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// запись уже существует
+			return false, nil
+		}
 		return false, err
 	}
 
-	return res.RowsAffected() > 0, nil
+	return true, nil
 }
 
 func (r *NotificationRepo) GetNotification(ctx context.Context, id int) (*domain.Notification, error) {
@@ -43,7 +49,7 @@ func (r *NotificationRepo) GetNotification(ctx context.Context, id int) (*domain
 			id,
 			project_path,
 			mr_iid,
-			event_type,
+			status,
 			created_at
 		FROM notifications
 		WHERE id = $1
@@ -51,7 +57,7 @@ func (r *NotificationRepo) GetNotification(ctx context.Context, id int) (*domain
 		&n.ID,
 		&n.ProjectPath,
 		&n.MRIID,
-		&n.EventType,
+		&n.Status,
 		&n.CreatedAt,
 	)
 
