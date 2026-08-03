@@ -2,9 +2,10 @@ package queue
 
 import (
 	"context"
+	"encoding/json"
 	"log"
-	"strconv"
 
+	"github.com/makaksel/MRNotifier/internal/domain"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -13,25 +14,29 @@ type RedisQueue struct {
 	channel string
 }
 
-func NewQueue(client *redis.Client, channel string) *RedisQueue {
+func New(client *redis.Client, channel string) *RedisQueue {
 	return &RedisQueue{
 		client:  client,
 		channel: channel,
 	}
 }
 
-func (q *RedisQueue) Publish(ctx context.Context, id int) error {
-	return q.client.Publish(ctx, q.channel, strconv.Itoa(id)).Err()
+func (q *RedisQueue) Publish(ctx context.Context, n domain.Notification) error {
+	payload, err := json.Marshal(n)
+	if err != nil {
+		return err
+	}
+	return q.client.Publish(ctx, q.channel, payload).Err()
 }
 
-func (q *RedisQueue) Consume(ctx context.Context) (<-chan int, error) {
+func (q *RedisQueue) Consume(ctx context.Context) (<-chan domain.Notification, error) {
 	pubsub := q.client.Subscribe(ctx, q.channel)
 
 	if _, err := pubsub.Receive(ctx); err != nil {
 		return nil, err
 	}
 
-	out := make(chan int)
+	out := make(chan domain.Notification)
 	redisCh := pubsub.Channel()
 
 	go func() {
@@ -45,14 +50,15 @@ func (q *RedisQueue) Consume(ctx context.Context) (<-chan int, error) {
 					return
 				}
 
-				notification, err := strconv.Atoi(msg.Payload)
+				var n domain.Notification
+				err := json.Unmarshal([]byte(msg.Payload), &n)
 				if err != nil {
 					log.Printf("decode error: %v", err)
 					continue
 				}
 
 				select {
-				case out <- notification:
+				case out <- n:
 				case <-ctx.Done():
 					return
 				}

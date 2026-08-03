@@ -3,10 +3,10 @@ package queue
 import (
 	"context"
 
-	"github.com/google/uuid"
+	"github.com/makaksel/MRNotifier/internal/domain"
 )
 
 type NotificationQueue interface {
-	Publish(ctx context.Context, id uuid.UUID) error
-	Consume(ctx context.Context) (<-chan uuid.UUID, error)
+	Publish(ctx context.Context, n domain.Notification) error
+	Consume(ctx context.Context) (<-chan domain.Notification, error)
 }
