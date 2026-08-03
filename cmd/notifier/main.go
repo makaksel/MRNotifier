@@ -13,7 +13,6 @@ import (
 	"github.com/makaksel/MRNotifier/internal/telegram"
 	transportHttp "github.com/makaksel/MRNotifier/internal/transport/http"
 	"github.com/makaksel/MRNotifier/internal/usecase"
-	"github.com/makaksel/MRNotifier/internal/worker"
 	"github.com/makaksel/MRNotifier/internal/worker/notification"
 )
 
@@ -26,13 +25,13 @@ func main() {
 
 	// 3. Репозиторий для работы с MR
 	MRRepo := postgres.NewMRRepo(db)
-	NotificationRepo := postgres.NewNotificationRepo(db)
+	NRepo := postgres.NewNotificationRepo(db)
 
 	// 4. Редис - для очереди
 	r := redis.New(cfg.Redis)
 
 	// 5. Очередь
-	q := queue.NewQueue(r, cfg.Redis.Channel)
+	q := queue.New(r, cfg.Redis.Channel)
 
 	// 7. Telegram клиент
 	tg, err := telegram.New(cfg.Telegram)
@@ -41,14 +40,13 @@ func main() {
 	}
 
 	// 8. UseCase — основная бизнес-логика
-	uc := usecase.New(MRRepo, NotificationRepo, q)
+	uc := usecase.New(MRRepo, NRepo, q)
 
 	// 9. Worker — асинхронная обработка MR
-	workerHandler := notification.New(NotificationRepo, tg)
-	workerS := worker.NewWorker(q, workerHandler)
+	worker := notification.New(q, NRepo, tg)
 
 	// 10. Запускаем воркер
-	go workerS.Start(context.Background())
+	go worker.Start(context.Background())
 
 	defer db.Close()
 	defer r.Close()
