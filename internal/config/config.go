@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -32,6 +33,12 @@ func Load() *Config {
 		log.Fatal("Error loading .env file")
 	}
 
+	var u map[int]string
+	err = json.Unmarshal([]byte(getEnv("USERS_MAP", "")), &u)
+	if err != nil {
+		log.Printf("USERS_MAP parsing error: %v", err)
+	}
+
 	return &Config{
 		App: AppConfig{
 			Name: getEnv("APP_NAME", "mr-notifier"),
@@ -53,6 +60,7 @@ func Load() *Config {
 		Telegram: telegram.Config{
 			BotToken: getEnv("TELEGRAM_BOT_TOKEN", ""),
 			ChatID:   getEnv("TELEGRAM_CHAT_ID", ""),
+			Users:    u,
 		},
 	}
 }

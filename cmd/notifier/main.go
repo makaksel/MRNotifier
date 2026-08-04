@@ -40,7 +40,7 @@ func main() {
 	}
 
 	// 8. UseCase — основная бизнес-логика
-	uc := usecase.New(MRRepo, NRepo, q)
+	uc := usecase.New(MRRepo, NRepo, q, cfg.Telegram.Users)
 
 	// 9. Worker — асинхронная обработка MR
 	worker := notification.New(q, NRepo, tg)
