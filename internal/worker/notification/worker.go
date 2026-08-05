@@ -1,21 +1,29 @@
-package worker
+package notification
 
 import (
 	"context"
 	"log"
 
-	queue "github.com/makaksel/MRNotifier/internal/queue/redis"
+	"github.com/makaksel/MRNotifier/internal/cache"
+	"github.com/makaksel/MRNotifier/internal/domain"
+	queue "github.com/makaksel/MRNotifier/internal/queue"
+	"github.com/makaksel/MRNotifier/internal/repository"
+	"github.com/makaksel/MRNotifier/internal/telegram"
 )
 
 type Worker struct {
-	queue   *queue.RedisQueue
-	handler NotificationHandler
+	queue      queue.NotificationQueue
+	repo       repository.NotificationRepository
+	tg         telegram.Client
+	replyCache cache.ReplyCache
 }
 
-func NewWorker(q *queue.RedisQueue, h NotificationHandler) *Worker {
+func New(q queue.NotificationQueue, r repository.NotificationRepository, tg telegram.Client, rc cache.ReplyCache) *Worker {
 	return &Worker{
-		queue:   q,
-		handler: h,
+		queue:      q,
+		repo:       r,
+		tg:         tg,
+		replyCache: rc,
 	}
 }
 
@@ -30,23 +38,39 @@ func (w *Worker) Start(ctx context.Context) error {
 
 	for {
 		select {
-		case id, ok := <-ch:
+		case n, ok := <-ch:
 			if !ok {
 				return nil
 			}
 
 			sem <- struct{}{}
 
-			go func(id int) {
+			go func(n domain.Notification) {
 				defer func() { <-sem }()
 
-				if err := w.handler.Handle(ctx, id); err != nil {
-					log.Printf("handle error: %v, notification: %+v", err, id)
+				if err := w.Handle(ctx, n); err != nil {
+					log.Printf("handle error: %v, notification: %+v", err, n)
 				}
-			}(id)
+			}(n)
 
 		case <-ctx.Done():
 			return ctx.Err()
 		}
 	}
+}
+
+func (w *Worker) Handle(ctx context.Context, n domain.Notification) error {
+
+	// Send to tg
+	res, err := w.tg.Send(ctx, &n)
+
+	// Update notification in db
+	w.repo.UpdateMessageID(ctx, n.ID, res.ID, res.Chat.ID)
+
+	// Update notification in cache
+	w.replyCache.Set(ctx, n.ProjectPath, n.MRIID, res.Chat.ID, res.ID)
+
+	// If it new, update reply message
+
+	return err
 }
