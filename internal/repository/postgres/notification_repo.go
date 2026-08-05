@@ -18,30 +18,7 @@ func NewNotificationRepo(db *pgxpool.Pool) *NotificationRepo {
 	return &NotificationRepo{db: db}
 }
 
-func (r *NotificationRepo) InsertNotification(ctx context.Context, projectPath string, mrIID int, n *domain.Notification) (bool, error) {
-	err := r.db.QueryRow(ctx, `
-		INSERT INTO notifications (project_path, mr_iid, status)
-		VALUES ($1, $2, $3)
-		ON CONFLICT DO NOTHING
-		RETURNING id
-	`,
-		projectPath,
-		mrIID,
-		n.Status,
-	).Scan(&n.ID)
-
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			// запись уже существует
-			return false, nil
-		}
-		return false, err
-	}
-
-	return true, nil
-}
-
-func (r *NotificationRepo) GetNotification(ctx context.Context, id int) (*domain.Notification, error) {
+func (r *NotificationRepo) Get(ctx context.Context, id int) (*domain.Notification, error) {
 	var n domain.Notification
 
 	err := r.db.QueryRow(ctx, `
@@ -69,4 +46,81 @@ func (r *NotificationRepo) GetNotification(ctx context.Context, id int) (*domain
 	}
 
 	return &n, nil
+}
+
+func (r *NotificationRepo) GetByProject(ctx context.Context, project string, mrIID int) (*domain.Notification, error) {
+	var n domain.Notification
+
+	err := r.db.QueryRow(ctx, `
+		SELECT
+			id,
+			project_path,
+			mr_iid,
+			status,
+			message_id,
+			chat_id,
+			status,
+			created_at
+		FROM notifications
+		WHERE project_path = $1 AND mr_iid = $2
+	`, project, mrIID).Scan(
+		&n.ID,
+		&n.ProjectPath,
+		&n.MRIID,
+		&n.MessageId,
+		&n.ChatId,
+		&n.Status,
+		&n.CreatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &n, nil
+}
+
+func (r *NotificationRepo) Insert(ctx context.Context, projectPath string, mrIID int, n *domain.Notification) (bool, error) {
+	err := r.db.QueryRow(ctx, `
+		INSERT INTO notifications (project_path, mr_iid, status)
+		VALUES ($1, $2, $3)
+		ON CONFLICT DO NOTHING
+		RETURNING id
+	`,
+		projectPath,
+		mrIID,
+		n.Status,
+	).Scan(&n.ID)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// запись уже существует
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *NotificationRepo) UpdateMessageID(
+	ctx context.Context,
+	id int,
+	msgID int,
+	chatID int64,
+) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE notifications
+		SET message_id = $2 AND chat_id = $3
+		WHERE id = $1
+	`,
+		id,
+		msgID,
+		chatID,
+	)
+
+	return err
 }
