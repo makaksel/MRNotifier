@@ -2,17 +2,23 @@ package telegram
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"math"
 	"time"
 
 	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 	"github.com/makaksel/MRNotifier/internal/domain"
 )
+
+type Client interface {
+	Send(ctx context.Context, n *domain.Notification) (*models.Message, error)
+}
 
 type Config struct {
 	BotToken string
 	ChatID   string
+	Users    map[int]string
 }
 
 type Bot struct {
@@ -47,14 +53,13 @@ func New(c Config) (*Bot, error) {
 	}, nil
 }
 
-func (b *Bot) SendNotification(ctx context.Context, n *domain.Notification) error {
-	msg := fmt.Sprintf(
-		"📦 MR %s/%d: %s\n%s\n%s",
-		n.ProjectPath, n.MRIID, n.EventType, n.CreatedAt, "Web URL here",
-	)
-	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: b.Config.ChatID, // из config
-		Text:   msg,
+func (b *Bot) Send(ctx context.Context, n *domain.Notification) (*models.Message, error) {
+	log.Printf("n.IdForReply: %+v", n.IdForReply)
+	res, err := b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:          b.Config.ChatID, // из config
+		Text:            n.Text,
+		ReplyParameters: &models.ReplyParameters{MessageID: n.IdForReply},
 	})
-	return err
+
+	return res, err
 }
