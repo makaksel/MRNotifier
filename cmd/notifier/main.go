@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	replyCache "github.com/makaksel/MRNotifier/internal/cache/reply"
 	"github.com/makaksel/MRNotifier/internal/config"
 	queue "github.com/makaksel/MRNotifier/internal/queue/redis"
 	"github.com/makaksel/MRNotifier/internal/redis"
@@ -33,6 +34,9 @@ func main() {
 	// 5. Очередь
 	q := queue.New(r, cfg.Redis.Channel)
 
+	// 6. Кеш ответов
+	rc := replyCache.New(r)
+
 	// 7. Telegram клиент
 	tg, err := telegram.New(cfg.Telegram)
 	if err != nil {
@@ -40,10 +44,10 @@ func main() {
 	}
 
 	// 8. UseCase — основная бизнес-логика
-	uc := usecase.New(MRRepo, NRepo, q, cfg.Telegram.Users)
+	uc := usecase.New(MRRepo, NRepo, q, rc, cfg.Telegram.Users)
 
 	// 9. Worker — асинхронная обработка MR
-	worker := notification.New(q, NRepo, tg)
+	worker := notification.New(q, NRepo, tg, rc)
 
 	// 10. Запускаем воркер
 	go worker.Start(context.Background())
