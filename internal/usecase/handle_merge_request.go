@@ -14,70 +14,107 @@ func (uc *Client) HandleMr(ctx context.Context, data *domain.MergeRequestEvent) 
 		return fmt.Errorf("MR state not opened or merged: %s", data.MR.State)
 	}
 
-	log.Printf("input.MR.State: %s", data.MR.State)
 	// Обновляем MR в БД
 	updated, err := uc.MRRepo.UpsertMR(ctx, data)
-
 	if err != nil {
 		return err
 	}
 	if !updated {
-		return fmt.Errorf("MR already exist. Path: %s; IID: %d", data.ProjectPath, data.MR.IID)
+		log.Printf("MR already exist. Path: %s; IID: %d", data.ProjectPath, data.MR.IID)
 	}
 
 	// Создаем новое уведомление
-	n := makeNotification(data)
+	var n domain.Notification
+
+	if data.MR.State == "merged" {
+		n = uc.makeMergedNotification(ctx, data)
+	} else {
+		n = uc.makeOpenedNotification(ctx, data)
+	}
 
 	// Обновляем уведомление в БД
-	created, err := uc.NotificationRepo.InsertNotification(ctx, n.ProjectPath, n.MRIID, n)
+	created, err := uc.NotificationRepo.Insert(ctx, n.ProjectPath, n.MRIID, &n)
 	if err != nil {
 		return err
 	}
 	if !created {
-		return fmt.Errorf("Notification already exist. Path: %s; IID: %d", data.ProjectPath, data.MR.IID)
+		return fmt.Errorf("notification already exist. Path: %s; IID: %d; Type: %s", n.ProjectPath, n.MRIID, n.Status)
 	}
 
-	// Кладем уведомление в кеш
-
 	// Пушим в очередь воркера
-	err = uc.queue.Publish(ctx, data.MR.ID)
-
+	err = uc.queue.Publish(ctx, n)
 	if err != nil {
-		return fmt.Errorf("Push to worker failed. Path: %s; and IID: %d", data.ProjectPath, data.MR.IID)
+		return fmt.Errorf("push to worker failed. Notification: %+v", n)
 	}
 
 	return nil
 }
 
-func makeNotification(data *domain.MergeRequestEvent) domain.Notification {
-	var text string
-
-	if data.MR.State == "merged" {
-		// TODO from there I can get TG for !!data.MR.Author.Username ?
-		text = fmt.Sprintf(
-			"✅ *Merge Request принят!*\n\n👤 Смержил: %s\n\n🧑 Обнови статус в Джире: %s",
-			data.MR.Author.Username,
-			data.MR.Author.Username,
-		)
-
+func (uc *Client) makeNotification(ctx context.Context, data *domain.MergeRequestEvent) domain.Notification {
+	authorTg := uc.users[data.MR.Author.ID]
+	
+	if authorTg != "" {
+		authorTg = fmt.Sprintf(" (tg: %s)", authorTg)
 	}
-	// TODO from there I can get TG for !!data.MR.Author.Username ?
-	text = fmt.Sprintf(
-		"🚀 Новый Merge Request создан\n\n📌 Название: %s\n\n🌿 Ветка: %s → %s\n\n👤 Автор: %s (TG: %s)\n\n🔗 Ссылка: %s",
+
+	text := fmt.Sprintf(
+		"🚀 Новый Merge Request создан\n\n📌 Название: %s\n\n🌿 Ветка: %s → %s\n\n👤 Автор: %s%s\n\n🔗 Ссылка: %s",
 		data.MR.Title,
 		data.MR.SourceBranch,
 		data.MR.TargetBranch,
 		data.MR.Author.Name,
-		data.MR.Author.Username,
+		authorTg,
 		data.MR.WebURL,
 	)
 
 	return domain.Notification{
-		Text:             text,
-		ProjectPath:      data.ProjectPath,
-		MRIID:            data.MR.IID,
-		Status:           "new",
-		ReplyToMessageId: "1", // from there?
+		Text:        text,
+		ProjectPath: data.ProjectPath,
+		MRIID:       data.MR.IID,
+		Type:        "opened",
+	}
+}
+
+func (uc *Client) makeMergedNotification(ctx context.Context, data *domain.MergeRequestEvent) domain.Notification {
+	authorTg := uc.users[data.MR.Author.ID]
+
+	if authorTg != "" {
+		authorTg = fmt.Sprintf("🧑 Обнови статус в Джире: %s\n\n", authorTg)
 	}
 
+	text := fmt.Sprintf(
+		"✅ Merge Request принят!\n\n👤 Смержил: %s\n\n%s",
+		data.MR.Author.Name,
+		authorTg,
+	)
+
+	rId := uc.getReplyMsgId(ctx, data.ProjectPath, data.MR.IID)
+
+	return domain.Notification{
+		Text:        text,
+		ProjectPath: data.ProjectPath,
+		MRIID:       data.MR.IID,
+		Type:        "merged",
+		IdForReply:  rId,
+	}
+}
+
+func (uc *Client) getReplyMsgId(ctx context.Context, project string, mrIID int) int {
+
+	// Получить репли месседж из кеша
+	r, err := uc.replyCache.Get(ctx, project, mrIID)
+	if err != nil {
+		log.Printf("err reply cache: %s", err)
+	}
+	if r != nil {
+		return r.MessageID
+	}
+
+	// Получить репли месседж из БД
+	n, err := uc.NotificationRepo.GetByProject(ctx, project, mrIID)
+	if err != nil {
+		log.Printf("err reply db: %s", err)
+	}
+
+	return n.MessageId
 }

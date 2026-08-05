@@ -36,8 +36,6 @@ CREATE TABLE notifications
 
     reply_to_message_id INTEGER,
 
-    text                TEXT    NOT NULL,
-
     status              TEXT    NOT NULL,
 
     created_at          TIMESTAMPTZ DEFAULT now(),
