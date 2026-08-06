@@ -51,9 +51,20 @@ func (c *Client) Get(
 	project string,
 	mrIID int,
 ) (*domain.ReplyInfo, error) {
-	makeKey(project, mrIID)
+	data, err := c.rdb.Get(ctx, makeKey(project, mrIID)).Bytes()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	var info domain.ReplyInfo
+	if err := json.Unmarshal(data, &info); err != nil {
+		return nil, err
+	}
+
+	return &info, nil
 }
 
 func (c *Client) Delete(
@@ -61,7 +72,5 @@ func (c *Client) Delete(
 	project string,
 	mrIID int,
 ) error {
-	makeKey(project, mrIID)
-
-	return nil
+	return c.rdb.Del(ctx, makeKey(project, mrIID)).Err()
 }
