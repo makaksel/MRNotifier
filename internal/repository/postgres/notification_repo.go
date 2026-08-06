@@ -85,14 +85,14 @@ func (r *NotificationRepo) GetByProject(ctx context.Context, project string, mrI
 
 func (r *NotificationRepo) Insert(ctx context.Context, projectPath string, mrIID int, n *domain.Notification) (bool, error) {
 	err := r.db.QueryRow(ctx, `
-		INSERT INTO notifications (project_path, mr_iid, status)
+		INSERT INTO notifications (project_path, mr_iid, type)
 		VALUES ($1, $2, $3)
 		ON CONFLICT DO NOTHING
 		RETURNING id
 	`,
 		projectPath,
 		mrIID,
-		n.Status,
+		n.Type,
 	).Scan(&n.ID)
 
 	if err != nil {
@@ -114,12 +114,16 @@ func (r *NotificationRepo) UpdateMessageID(
 ) error {
 	_, err := r.db.Exec(ctx, `
 		UPDATE notifications
-		SET message_id = $2 AND chat_id = $3
+		SET
+			message_id = $2,
+			chat_id = $3,
+			status = $4
 		WHERE id = $1
 	`,
 		id,
 		msgID,
 		chatID,
+		domain.StatusSended,
 	)
 
 	return err

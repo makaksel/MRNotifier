@@ -7,8 +7,8 @@ type Notification struct {
 
 	ProjectPath string `json:"project_path"`
 	MRIID       int    `json:"mr_iid"`
-	Status      string `json:"status"` // new | done
-	Type        string `json:"type"`   // opened | merged
+	Status      Status `json:"status"`
+	Type        Type   `json:"type"`
 
 	Text string `json:"text"`
 
@@ -20,3 +20,17 @@ type Notification struct {
 	IdForReply     int
 	ChatIdForReply int64
 }
+
+type Status string
+
+const (
+	StatusNew    Status = "new"
+	StatusSended Status = "sended"
+)
+
+type Type string
+
+const (
+	TypeOpened Type = "opened"
+	TypeMerged Type = "merged"
+)
