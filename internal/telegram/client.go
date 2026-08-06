@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"log"
 	"math"
 	"time"
 
@@ -54,9 +53,8 @@ func New(c Config) (*Bot, error) {
 }
 
 func (b *Bot) Send(ctx context.Context, n *domain.Notification) (*models.Message, error) {
-	log.Printf("n.IdForReply: %+v", n.IdForReply)
 	res, err := b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:          b.Config.ChatID, // из config
+		ChatID:          b.Config.ChatID,
 		Text:            n.Text,
 		ReplyParameters: &models.ReplyParameters{MessageID: n.IdForReply},
 	})
