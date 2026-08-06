@@ -29,16 +29,16 @@ CREATE TABLE merge_requests
 CREATE TABLE notifications
 (
     id                  SERIAL PRIMARY KEY,
-
     project_path        TEXT    NOT NULL,
-
     mr_iid              INTEGER NOT NULL,
 
-    reply_to_message_id INTEGER,
+    status              TEXT    NOT NULL DEFAULT 'new',
+    type                TEXT    NOT NULL,
 
-    status              TEXT    NOT NULL,
+    created_at          TIMESTAMPTZ      DEFAULT now(),
 
-    created_at          TIMESTAMPTZ DEFAULT now(),
+    message_id          INTEGER,
+    chat_id             BIGINT,
 
-    UNIQUE (project_path, mr_iid, status)
+    UNIQUE (project_path, mr_iid, type)
 );
