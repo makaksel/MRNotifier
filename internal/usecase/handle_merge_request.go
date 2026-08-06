@@ -25,11 +25,10 @@ func (uc *Client) HandleMr(ctx context.Context, data *domain.MergeRequestEvent) 
 
 	// Создаем новое уведомление
 	var n domain.Notification
-
-	if data.MR.State == "merged" {
+	if data.MR.State == string(domain.TypeMerged) {
 		n = uc.makeMergedNotification(ctx, data)
 	} else {
-		n = uc.makeOpenedNotification(ctx, data)
+		n = uc.makeOpenedNotification(data)
 	}
 
 	// Обновляем уведомление в БД
@@ -50,9 +49,9 @@ func (uc *Client) HandleMr(ctx context.Context, data *domain.MergeRequestEvent) 
 	return nil
 }
 
-func (uc *Client) makeNotification(ctx context.Context, data *domain.MergeRequestEvent) domain.Notification {
+func (uc *Client) makeOpenedNotification(data *domain.MergeRequestEvent) domain.Notification {
 	authorTg := uc.users[data.MR.Author.ID]
-	
+
 	if authorTg != "" {
 		authorTg = fmt.Sprintf(" (tg: %s)", authorTg)
 	}
@@ -71,7 +70,7 @@ func (uc *Client) makeNotification(ctx context.Context, data *domain.MergeReques
 		Text:        text,
 		ProjectPath: data.ProjectPath,
 		MRIID:       data.MR.IID,
-		Type:        "opened",
+		Type:        domain.TypeOpened,
 	}
 }
 
@@ -94,13 +93,12 @@ func (uc *Client) makeMergedNotification(ctx context.Context, data *domain.Merge
 		Text:        text,
 		ProjectPath: data.ProjectPath,
 		MRIID:       data.MR.IID,
-		Type:        "merged",
+		Type:        domain.TypeMerged,
 		IdForReply:  rId,
 	}
 }
 
 func (uc *Client) getReplyMsgId(ctx context.Context, project string, mrIID int) int {
-
 	// Получить репли месседж из кеша
 	r, err := uc.replyCache.Get(ctx, project, mrIID)
 	if err != nil {
