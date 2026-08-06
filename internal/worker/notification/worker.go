@@ -60,17 +60,18 @@ func (w *Worker) Start(ctx context.Context) error {
 }
 
 func (w *Worker) Handle(ctx context.Context, n domain.Notification) error {
-
 	// Send to tg
 	res, err := w.tg.Send(ctx, &n)
 
 	// Update notification in db
-	w.repo.UpdateMessageID(ctx, n.ID, res.ID, res.Chat.ID)
+	err = w.repo.UpdateMessageID(ctx, n.ID, res.ID, res.Chat.ID)
 
-	// Update notification in cache
-	w.replyCache.Set(ctx, n.ProjectPath, n.MRIID, res.Chat.ID, res.ID)
-
-	// If it new, update reply message
+	// Update reply in cache
+	if n.Type == domain.TypeMerged {
+		err = w.replyCache.Delete(ctx, n.ProjectPath, n.MRIID)
+	} else {
+		err = w.replyCache.Set(ctx, n.ProjectPath, n.MRIID, res.Chat.ID, res.ID)
+	}
 
 	return err
 }
